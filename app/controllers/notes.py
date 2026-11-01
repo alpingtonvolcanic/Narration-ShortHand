@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -49,7 +49,7 @@ def index():
             flash("Notes must be 500 characters or fewer.", "error")
         else:
             try:
-                timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+                timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
                 store.append_note(selected_document, note, timestamp)
             except (OSError, UnicodeError, ValueError, FileNotFoundError) as error:
                 flash(str(error), "error")
@@ -79,9 +79,8 @@ def narrate_document(filename):
         content = _store().read_document(filename)
         if not content.strip():
             return jsonify(error="The selected document is empty."), 400
-        temporary = NamedTemporaryFile(suffix=".wav", delete=False)
-        temporary.close()
-        output_path = Path(temporary.name)
+        with NamedTemporaryFile(suffix=".wav", delete=False) as temporary:
+            output_path = Path(temporary.name)
         narrate(content, output_path)
     except (OSError, UnicodeError, ValueError, FileNotFoundError, RuntimeError) as error:
         if "output_path" in locals():

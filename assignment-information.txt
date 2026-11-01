@@ -18,4 +18,9 @@ The following steps were added to the initial workflow to enhance automated test
 - name: Dependency audit
   run: pip-audit
 
+The CI pipeline now runs Ruff linting, Bandit security scanning, pip-audit
+dependency checks, and pytest with an 80% coverage requirement. It also caches
+Python dependencies, cancels redundant runs, and packages successful builds as
+an uploaded ZIP artifact.
+
   
