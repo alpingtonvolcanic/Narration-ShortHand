@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ config.APP_NAME }}{% endblock %}
+{% block content %}
+  <header class="page-header">
+    <p class="eyebrow">{{ config.APP_NAME }} · agile handoff utility</p>
+    <h1>Write a note to a document</h1>
+    <p class="intro">Choose a local document, add a short handoff note, and keep a timestamped history in the file.</p>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <section class="messages" aria-live="polite">
+        {% for category, message in messages %}
+          <p class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+      </section>
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" class="workspace">
+    <aside class="document-panel">
+      <h2>Documents</h2>
+      <p class="muted">Text-compatible files in the local document directory.</p>
+      {% if documents %}
+        <div class="document-list">
+          {% for document in documents %}
+            <label class="document-option">
+              <input type="radio" name="document" value="{{ document.name }}"
+                {% if selected_document == document.name %}checked{% endif %}>
+              <span>{{ document.name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty">No supported documents found. Add a .md, .txt, .rst, .adoc, .doc, .text, or .log file to the configured directory.</p>
+      {% endif %}
+    </aside>
+
+    <section class="note-panel">
+      <label for="note"><strong>Short note</strong></label>
+      <textarea id="note" name="note" maxlength="500" rows="8"
+        placeholder=""></textarea>
+      <p class="muted">Press Enter to add the note. Use Shift+Enter for a line break. A UTC date/time stamp is added automatically.</p>
+      <button type="submit" {% if not documents %}disabled{% endif %}>Add timestamped note</button>
+      <section class="document-preview" aria-live="polite">
+        <h2>Open document</h2>
+        <p id="preview-name" class="muted">{{ selected_document }}</p>
+        <pre id="document-content">{% if selected_document %}Loading document...{% else %}Select a document to view its contents.{% endif %}</pre>
+        <button id="narrate-document" type="button" disabled>Narrate open document</button>
+        <p id="narration-status" class="muted" role="status"></p>
+      </section>
+    </section>
+  </form>
+{% endblock %}
