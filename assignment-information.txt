@@ -23,4 +23,150 @@ dependency checks, and pytest with an 80% coverage requirement. It also caches
 Python dependencies, cancels redundant runs, and packages successful builds as
 an uploaded ZIP artifact.
 
-  
+Authentication and private notebooks
+-----------------------------------
+The application now initializes a SQLite database (`users.sqlite3`) and
+provides `/signup`, `/login`, `/logout`, and `/admin` pages. Usernames are
+normalized and stored as keyed HMAC-SHA256 hashes; passwords are stored using
+Werkzeug's salted password hashing. The administrator account is provisioned
+from `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables, so its
+password is not committed to source control. Optional dummy accounts `demo1`
+and `demo2` can be provisioned with `DEMO_PASSWORD`.
+
+Before starting the application, set the credentials in the terminal:
+
+    export ADMIN_USERNAME=administrator
+    export ADMIN_PASSWORD='choose-a-password-at-least-12-characters'
+    export DEMO_PASSWORD='choose-a-different-password-at-least-12-characters'
+    python app.py
+
+The administrator logs in with username `administrator` and the value assigned
+to `ADMIN_PASSWORD`. The dummy users log in with username `demo1` or `demo2`
+and the value assigned to `DEMO_PASSWORD`. These are environment values, not
+default passwords, and must be set before each new application process. The
+administrator is not provisioned unless `ADMIN_PASSWORD` is set, and the dummy
+users are not provisioned unless `DEMO_PASSWORD` is set. Passwords must be
+12-128 characters. If an account already exists in `users.sqlite3`, changing
+the environment variable does not change its existing password.
+
+The demo users are created automatically; do not create them through the
+signup form. For example, set `DEMO_PASSWORD` and start the application:
+
+    export DEMO_PASSWORD='DemoPassword123!'
+    python app.py
+
+Startup creates both `demo1` and `demo2`. They can then sign in at `/login`
+using `DemoPassword123!`. If the accounts already exist, changing
+`DEMO_PASSWORD` does not change their passwords.
+
+Signup validates usernames as 3-32 characters containing only letters, numbers,
+periods, underscores, or hyphens. Passwords must be 12-128 characters and the
+confirmation must match. Every account receives an isolated `notebook.md`
+file, and the database records its relative path, creation date, role, and
+last notebook update timestamp. Authenticated document and narration routes
+use the current user's notebook directory; the admin page shows account roles
+and timestamps without revealing usernames.
+
+The application satisfies the database record requirement using the `users`
+table. Visitors can add a user record through `/signup`, authenticated users
+can log in and use their account-backed notebook, and administrators can browse
+the account table at `/admin`. Administrators can update an account's role and
+delete user records from the admin page; deleting an account also removes its
+private notebook directory. The application prevents
+an administrator from deleting their own account or the last administrator,
+so the administration area cannot be accidentally made inaccessible.
+
+OWASP security protections
+-------------------------
+The application includes protections against at least three OWASP Top 10
+security risks:
+
+1. **Broken access control:** authenticated routes use `login_required`, and
+   administrator routes verify `g.user["role"] == "admin"`. Users receive
+   separate notebook directories, while administrators cannot delete their own
+   account or the last administrator. Evidence is in `app/controllers/auth.py`
+   and `app/controllers/notes.py`.
+2. **Injection:** database operations use SQLite parameterized queries rather
+   than string concatenation. Document filenames are restricted to a basename,
+   supported extensions, and the user's resolved notebook directory. Evidence is
+   in `app/models/database.py` and `app/models/documents.py`.
+3. **Cross-site scripting (XSS):** Jinja autoescaping is used for server-rendered
+   values, and the browser-side document preview writes content with
+   `textContent` rather than inserting HTML. Evidence is in the templates and
+   `static/notes.js`.
+4. **Cross-site request forgery (CSRF):** every state-changing request requires
+   a session-bound token, supplied by hidden form fields or the
+   `X-CSRF-Token` header. Evidence is in `app/__init__.py`, the HTML forms, and
+   `static/notes.js`.
+5. **Security misconfiguration and authentication failures:** passwords are
+   hashed with Werkzeug, credentials are supplied through environment variables,
+   session cookies are HttpOnly/SameSite, and the application no longer uses a
+   predictable fallback secret key. A random development key is generated when
+   none is supplied; deployments should set a persistent high-entropy
+   `SECRET_KEY`. Evidence is in `app/config.py`.
+
+Ruff, Bandit, pip-audit, and the automated pytest suite run in CI to help
+detect quality, security, dependency, and regression problems.
+
+Task 3: DevOps development pipeline
+-----------------------------------
+
+Continuous integration (CI)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Continuous integration automatically checks changes whenever code is pushed or
+a pull request is opened. This project uses GitHub Actions rather than GitLab
+CI. The workflow is defined in `.github/workflows/ci.yml` and runs the
+analysis, test, and package jobs on Ubuntu. Evidence is the workflow file and
+a successful run in the repository's GitHub Actions tab.
+
+Source Control Management (SCM)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Git and GitHub provide source control management. They record the history of
+changes, identify the author and commit message, and allow work to be reviewed
+on branches and pull requests. Evidence includes the GitHub repository,
+`git log --oneline`, the `main` branch, and the commit history. Useful commands
+for demonstrating this are:
+
+    git status
+    git log --oneline
+    git branch -a
+    git remote -v
+
+Build automation tool
+~~~~~~~~~~~~~~~~~~~~~
+The `package` job in `.github/workflows/ci.yml` is the build automation used
+in this project. After analysis and tests pass, it creates a ZIP file named
+`broadbandcheck-<commit-sha>.zip` and uploads it as a workflow artifact.
+Evidence is the successful package job and its downloadable artifact in
+GitHub Actions.
+
+If “A-A-P” means Ansible Automation Platform, it is not currently used by this
+project. The project should not claim A-A-P evidence unless an AAP project,
+playbook, job template, or deployment run is added. The current equivalent is
+the GitHub Actions build workflow described above.
+
+Web application server
+~~~~~~~~~~~~~~~~~~~~~~
+The application is implemented in Python using Flask. `app.py` starts the
+Flask application, while `app/__init__.py` provides the application factory
+and registers the authentication and notebook controllers. Evidence is the
+running application at `http://127.0.0.1:5000`, the Flask dependency in
+`requirements.txt`, and the Flask routes in `app/controllers/`.
+
+Code testing and quality
+~~~~~~~~~~~~~~~~~~~~~~~~
+Code quality is checked automatically by Ruff linting, Bandit security
+scanning, and pip-audit dependency scanning in the `analyse` job. These tools
+help identify style errors, common Python security problems, and vulnerable
+dependencies. Evidence is the corresponding steps in
+`.github/workflows/ci.yml` and their logs from a successful Actions run.
+
+Automated test plan
+~~~~~~~~~~~~~~~~~~~
+The automated test plan is implemented in `tests/test_notes.py` and is run
+with pytest. It covers account creation and login, private notebooks,
+timestamped notes, document browsing, narration, invalid paths, separate user
+data, and administrator account management. The CI workflow runs pytest with
+coverage and fails the build if coverage is below 80 percent. Evidence is the
+test file, the `python -m pytest` result, and the successful `test` job in
+GitHub Actions.

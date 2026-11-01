@@ -3,12 +3,25 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}{{ config.APP_NAME }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='notes.js') }}" defer></script>
   </head>
   <body>
     <main class="shell">
+      {% if g.user %}
+        <nav class="account-nav">
+          <a href="{{ url_for('notes.index') }}">Notebook</a>
+          {% if g.user["role"] == "admin" %}
+            <a href="{{ url_for('auth.admin') }}">Admin</a>
+          {% endif %}
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit">Sign out</button>
+          </form>
+        </nav>
+      {% endif %}
       {% block content %}{% endblock %}
     </main>
   </body>

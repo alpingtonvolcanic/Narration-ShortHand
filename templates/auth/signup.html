@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Create account · {{ config.APP_NAME }}{% endblock %}
+{% block content %}
+  <header class="page-header">
+    <p class="eyebrow">{{ config.APP_NAME }} · secure notes</p>
+    <h1>Create an account</h1>
+    <p class="intro">Your account receives a separate notebook automatically.</p>
+  </header>
+  {% include "auth/messages.html" %}
+  <form method="post" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="username">Username</label>
+    <input id="username" name="username" required minlength="3" maxlength="32"
+      pattern="[A-Za-z0-9_.-]+" autocomplete="username">
+    <p class="muted">Use 3-32 letters, numbers, '.', '_' or '-'.</p>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" required minlength="12"
+      maxlength="128" autocomplete="new-password">
+    <label for="password_confirmation">Confirm password</label>
+    <input id="password_confirmation" name="password_confirmation" type="password"
+      required minlength="12" maxlength="128" autocomplete="new-password">
+    <button type="submit">Create account</button>
+  </form>
+  <p class="muted">Already registered? <a href="{{ url_for('auth.login') }}">Sign in</a>.</p>
+{% endblock %}

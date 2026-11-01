@@ -7,14 +7,17 @@ from flask import (
     after_this_request,
     current_app,
     flash,
+    g,
     jsonify,
     redirect,
     render_template,
     request,
     send_file,
+    session,
     url_for,
 )
 
+from app.controllers.auth import database, login_required
 from app.models.documents import DocumentStore
 from app.services.narrator import narrate
 
@@ -22,21 +25,25 @@ notes = Blueprint("notes", __name__)
 
 
 def _store():
+    notebook_root = current_app.config["DOCUMENT_ROOT"] / "notebooks" / str(g.user["id"])
+    notebook_root.mkdir(parents=True, exist_ok=True)
     return DocumentStore(
-        current_app.config["DOCUMENT_ROOT"],
+        notebook_root,
         current_app.config["SUPPORTED_DOCUMENT_EXTENSIONS"],
         current_app.config["EXCLUDED_DOCUMENT_NAMES"],
     )
 
 
 @notes.route("/", methods=["GET", "POST"])
+@login_required
 def index():
+    _store().ensure_default_document("notebook.md")
     store = _store()
     documents = store.list_documents()
     selected_document = (
-        request.form.get("document", current_app.config["DEFAULT_DOCUMENT"])
+        request.form.get("document", "notebook.md")
         if request.method == "POST"
-        else current_app.config["DEFAULT_DOCUMENT"]
+        else "notebook.md"
     )
 
     if request.method == "POST":
@@ -51,6 +58,7 @@ def index():
             try:
                 timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
                 store.append_note(selected_document, note, timestamp)
+                database().update_notebook(session["user_id"])
             except (OSError, UnicodeError, ValueError, FileNotFoundError) as error:
                 flash(str(error), "error")
             else:
@@ -65,6 +73,7 @@ def index():
 
 
 @notes.get("/documents/<path:filename>")
+@login_required
 def document_contents(filename):
     try:
         content = _store().read_document(filename)
@@ -74,6 +83,7 @@ def document_contents(filename):
 
 
 @notes.post("/documents/<path:filename>/narrate")
+@login_required
 def narrate_document(filename):
     try:
         content = _store().read_document(filename)

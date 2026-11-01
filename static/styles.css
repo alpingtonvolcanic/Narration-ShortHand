@@ -8,6 +8,9 @@
 * { box-sizing: border-box; }
 body { margin: 0; }
 .shell { max-width: 1080px; margin: 0 auto; padding: 3rem 1.5rem; }
+.account-nav { display: flex; justify-content: flex-end; gap: 1rem; align-items: center; margin-bottom: 2rem; }
+.account-nav form { margin: 0; }
+.account-nav button { margin: 0; padding: .45rem .7rem; }
 .page-header { margin-bottom: 2rem; }
 .eyebrow { color: #4769d8; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 h1 { margin: .4rem 0 .75rem; font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -.04em; }
@@ -25,6 +28,11 @@ textarea:focus { outline: 3px solid #4769d833; border-color: #4769d8; }
 button { margin-top: 1rem; padding: .8rem 1.1rem; border: 0; border-radius: 8px; color: #fff; background: #4769d8; font: inherit; font-weight: 700; cursor: pointer; }
 button:hover { background: #3859c4; }
 button:disabled { background: #9da8bd; cursor: not-allowed; }
+.auth-form { display: grid; gap: .6rem; max-width: 430px; padding: 1.5rem; border: 1px solid #dfe5f0; border-radius: 14px; background: #fff; }
+.auth-form input { padding: .75rem; border: 1px solid #d5dcea; border-radius: 8px; font: inherit; }
+.auth-form button { width: fit-content; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { padding: .8rem; border: 1px solid #dfe5f0; text-align: left; }
 .document-preview { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e9f2; }
 .document-preview h2 { margin-bottom: .35rem; font-size: 1.1rem; }
 .document-preview p { margin: 0 0 .75rem; }

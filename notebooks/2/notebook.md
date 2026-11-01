@@ -1,0 +1,1 @@
+- [2026-11-01 23:17 UTC] In our first lesson we learned how to create a PIPELINE with CALM guidelines.

@@ -36,7 +36,14 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const response = await fetch(
         `/documents/${encodeURIComponent(openFilename)}/narrate`,
-        { method: "POST" },
+        {
+          method: "POST",
+          headers: {
+            "X-CSRF-Token": document.querySelector(
+              'meta[name="csrf-token"]',
+            ).content,
+          },
+        },
       );
       if (!response.ok) {
         const data = await response.json();

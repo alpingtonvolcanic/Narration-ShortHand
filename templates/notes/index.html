@@ -7,17 +7,10 @@
     <p class="intro">Choose a local document, add a short handoff note, and keep a timestamped history in the file.</p>
   </header>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <section class="messages" aria-live="polite">
-        {% for category, message in messages %}
-          <p class="message {{ category }}">{{ message }}</p>
-        {% endfor %}
-      </section>
-    {% endif %}
-  {% endwith %}
+  {% include "auth/messages.html" %}
 
   <form method="post" class="workspace">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <aside class="document-panel">
       <h2>Documents</h2>
       <p class="muted">Text-compatible files in the local document directory.</p>

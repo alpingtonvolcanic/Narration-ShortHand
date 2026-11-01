@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Admin · {{ config.APP_NAME }}{% endblock %}
+{% block content %}
+  <header class="page-header">
+    <p class="eyebrow">{{ config.APP_NAME }} · administration</p>
+    <h1>Account overview</h1>
+    <p class="intro">Usernames are intentionally not displayed because only their keyed hashes are stored. You can update roles or remove accounts and their private notebooks.</p>
+  </header>
+  <p><a href="{{ url_for('notes.index') }}">My notebook</a></p>
+  <table>
+  <thead><tr><th>ID</th><th>Role</th><th>Created</th><th>Last notebook update</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user["id"] }}</td>
+        <td>
+          <form method="post" action="{{ url_for('auth.update_user_role', user_id=user['id']) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <select name="role" aria-label="Role for account {{ user['id'] }}">
+              <option value="user" {% if user["role"] == "user" %}selected{% endif %}>user</option>
+              <option value="admin" {% if user["role"] == "admin" %}selected{% endif %}>admin</option>
+            </select>
+            <button type="submit">Update role</button>
+          </form>
+        </td>
+        <td>{{ user["created_at"] }}</td>
+        <td>{{ user["last_notebook_update"] or "Never" }}</td>
+        <td>
+          <form method="post" action="{{ url_for('auth.delete_user', user_id=user['id']) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit">Delete account</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
