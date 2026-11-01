@@ -1,0 +1,21 @@
+
+
+This application already has a basic CI pipeline: GitHub Actions installs dependencies and runs pytest on pushes and pull requests in ci.yml. 
+The following steps were added to the initial workflow to enhance automated tests with pytest, Flake8 linting and minimise security issues.
+
+- name: Install development tools
+  run: pip install pytest ruff bandit pip-audit
+
+- name: Lint
+  run: ruff check .
+
+- name: Test
+  run: pytest --cov=app
+
+- name: Security scan
+  run: bandit -r app
+
+- name: Dependency audit
+  run: pip-audit
+
+  
