@@ -72,12 +72,9 @@ are `.md`, `.txt`, `.rst`, `.adoc`, `.text`, `.log`, and `.doc`; these files
 must contain UTF-8 text. The application does not parse binary Word `.doc` or
 `.docx` files.
 
-Use **Narrate open document** below the preview to generate local speech with
-`pyttsx3`. On Linux, install the system speech engine if needed:
-
-```bash
-sudo apt-get install espeak
-```
+Use the **Narrate** button beside each note to use the browser's built-in Web
+Speech API. This does not require `pyttsx3`, eSpeak, or a server-side speech
+engine; the selected browser and operating system provide the voice.
 
 ## Test
 

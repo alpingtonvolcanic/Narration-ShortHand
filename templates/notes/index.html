@@ -9,19 +9,33 @@
 
   {% include "auth/messages.html" %}
 
-  <form method="post" class="workspace">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="workspace">
     <aside class="document-panel">
       <h2>Documents</h2>
       <p class="muted">Text-compatible files in the local document directory.</p>
+      <form method="post" action="{{ url_for('notes.create_document') }}" class="document-create">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="filename">New document name</label>
+        <input id="filename" name="filename" required maxlength="100"
+          placeholder="project.md">
+        <button type="submit">Create document</button>
+      </form>
       {% if documents %}
         <div class="document-list">
           {% for document in documents %}
-            <label class="document-option">
-              <input type="radio" name="document" value="{{ document.name }}"
-                {% if selected_document == document.name %}checked{% endif %}>
-              <span>{{ document.name }}</span>
-            </label>
+            <div class="document-row">
+              <label class="document-option">
+                <input type="radio" name="document" value="{{ document.name }}"
+                  {% if selected_document == document.name %}checked{% endif %}>
+                <span>{{ document.name }}</span>
+              </label>
+              {% if document.name != "notebook.md" %}
+                <form method="post" action="{{ url_for('notes.delete_document', filename=document.name) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit" class="document-delete">Delete</button>
+                </form>
+              {% endif %}
+            </div>
           {% endfor %}
         </div>
       {% else %}
@@ -30,18 +44,19 @@
     </aside>
 
     <section class="note-panel">
-      <label for="note"><strong>Short note</strong></label>
-      <textarea id="note" name="note" maxlength="500" rows="8"
-        placeholder=""></textarea>
-      <p class="muted">Press Enter to add the note. Use Shift+Enter for a line break. A UTC date/time stamp is added automatically.</p>
-      <button type="submit" {% if not documents %}disabled{% endif %}>Add timestamped note</button>
-      <section class="document-preview" aria-live="polite">
-        <h2>Open document</h2>
-        <p id="preview-name" class="muted">{{ selected_document }}</p>
-        <pre id="document-content">{% if selected_document %}Loading document...{% else %}Select a document to view its contents.{% endif %}</pre>
-        <button id="narrate-document" type="button" disabled>Narrate open document</button>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="note"><strong>Short note</strong></label>
+        <textarea id="note" name="note" maxlength="500" rows="8"
+          placeholder=""></textarea>
+        <p class="muted">Press Enter to add the note. Use Shift+Enter for a line break. A UTC date/time stamp is added automatically.</p>
+        <button type="submit" {% if not documents %}disabled{% endif %}>Add timestamped note</button>
+      </form>
+      <section class="notes-editor" aria-live="polite">
+        <h2>Timestamped notes</h2>
         <p id="narration-status" class="muted" role="status"></p>
+        <div id="note-list"><p class="muted">Loading notes...</p></div>
       </section>
     </section>
-  </form>
+  </div>
 {% endblock %}

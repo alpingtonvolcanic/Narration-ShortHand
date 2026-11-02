@@ -2,7 +2,6 @@ import sqlite3
 from contextlib import closing
 
 from app import create_app
-from app.controllers import notes as notes_controller
 
 
 def post(client, path, data=None):
@@ -79,6 +78,52 @@ def test_note_is_appended_and_last_update_is_stored(tmp_path):
     assert last_update is not None
 
 
+def test_user_can_create_edit_and_delete_document_notes(tmp_path):
+    client = make_client(tmp_path)
+
+    response = post(client, "/documents", data={"filename": "ideas.md"})
+
+    assert response.status_code == 302
+    document = tmp_path / "notebooks" / "1" / "ideas.md"
+    assert document.exists()
+
+    post(client, "/", data={"document": "ideas.md", "note": "Initial idea"})
+    assert client.get("/documents/ideas.md/notes").json["notes"][0]["text"] == (
+        "Initial idea"
+    )
+
+    response = client.post(
+        "/documents/ideas.md/notes/0",
+        json={"text": "Updated idea"},
+        headers={"X-CSRF-Token": "test-csrf-token"},
+    )
+    assert response.status_code == 200
+    assert "Updated idea" in document.read_text(encoding="utf-8")
+
+    response = client.delete(
+        "/documents/ideas.md/notes/0",
+        headers={"X-CSRF-Token": "test-csrf-token"},
+    )
+    assert response.status_code == 200
+    assert document.read_text(encoding="utf-8") == ""
+
+
+def test_user_can_delete_created_document_but_not_default_notebook(tmp_path):
+    client = make_client(tmp_path)
+    client.get("/")
+    post(client, "/documents", data={"filename": "remove-me.md"})
+
+    response = post(client, "/documents/remove-me.md/delete")
+
+    assert response.status_code == 302
+    assert not (tmp_path / "notebooks" / "1" / "remove-me.md").exists()
+
+    response = post(client, "/documents/notebook.md/delete")
+
+    assert response.status_code == 302
+    assert (tmp_path / "notebooks" / "1" / "notebook.md").exists()
+
+
 def test_document_contents_are_displayed(tmp_path):
     client = make_client(tmp_path)
     document = tmp_path / "notebooks" / "1" / "handoff.md"
@@ -92,24 +137,6 @@ def test_document_contents_are_displayed(tmp_path):
         "filename": "handoff.md",
         "content": "Current sprint status",
     }
-
-
-def test_document_can_be_narrated(tmp_path, monkeypatch):
-    client = make_client(tmp_path)
-    document = tmp_path / "notebooks" / "1" / "handoff.md"
-    document.parent.mkdir(parents=True, exist_ok=True)
-    document.write_text("Narrate this status", encoding="utf-8")
-
-    def fake_narrate(text, output_path):
-        assert text == "Narrate this status"
-        output_path.write_bytes(b"fake audio")
-
-    monkeypatch.setattr(notes_controller, "narrate", fake_narrate)
-    response = post(client, "/documents/handoff.md/narrate")
-
-    assert response.status_code == 200
-    assert response.mimetype == "audio/wav"
-    assert response.data == b"fake audio"
 
 
 def test_invalid_document_path_is_rejected(tmp_path):

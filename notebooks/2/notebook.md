@@ -1,1 +1,2 @@
 - [2026-11-01 23:17 UTC] In our first lesson we learned how to create a PIPELINE with CALM guidelines.
+- [2026-11-01 23:49 UTC] Second lesson's theme focused on continuous integration and pipeline design and unit testing.

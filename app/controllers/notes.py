@@ -1,10 +1,7 @@
 from datetime import UTC, datetime
-from pathlib import Path
-from tempfile import NamedTemporaryFile
 
 from flask import (
     Blueprint,
-    after_this_request,
     current_app,
     flash,
     g,
@@ -12,14 +9,12 @@ from flask import (
     redirect,
     render_template,
     request,
-    send_file,
     session,
     url_for,
 )
 
 from app.controllers.auth import database, login_required
 from app.models.documents import DocumentStore
-from app.services.narrator import narrate
 
 notes = Blueprint("notes", __name__)
 
@@ -72,6 +67,31 @@ def index():
     )
 
 
+@notes.post("/documents")
+@login_required
+def create_document():
+    filename = request.form.get("filename", "").strip()
+    try:
+        _store().create_document(filename)
+    except (OSError, ValueError) as error:
+        flash(str(error), "error")
+    else:
+        flash(f"Created {filename}.", "success")
+    return redirect(url_for("notes.index"))
+
+
+@notes.post("/documents/<path:filename>/delete")
+@login_required
+def delete_document(filename):
+    try:
+        _store().delete_document(filename)
+    except (OSError, ValueError, FileNotFoundError) as error:
+        flash(str(error), "error")
+    else:
+        flash(f"Deleted {filename}.", "success")
+    return redirect(url_for("notes.index"))
+
+
 @notes.get("/documents/<path:filename>")
 @login_required
 def document_contents(filename):
@@ -82,24 +102,36 @@ def document_contents(filename):
     return jsonify(filename=filename, content=content)
 
 
-@notes.post("/documents/<path:filename>/narrate")
+@notes.get("/documents/<path:filename>/notes")
 @login_required
-def narrate_document(filename):
+def document_notes(filename):
     try:
-        content = _store().read_document(filename)
-        if not content.strip():
-            return jsonify(error="The selected document is empty."), 400
-        with NamedTemporaryFile(suffix=".wav", delete=False) as temporary:
-            output_path = Path(temporary.name)
-        narrate(content, output_path)
-    except (OSError, UnicodeError, ValueError, FileNotFoundError, RuntimeError) as error:
-        if "output_path" in locals():
-            output_path.unlink(missing_ok=True)
-        return jsonify(error=str(error)), 500
+        return jsonify(notes=_store().list_notes(filename))
+    except (OSError, UnicodeError, ValueError, FileNotFoundError) as error:
+        return jsonify(error=str(error)), 404
 
-    @after_this_request
-    def remove_audio(response):
-        output_path.unlink(missing_ok=True)
-        return response
 
-    return send_file(output_path, mimetype="audio/wav", download_name="narration.wav")
+@notes.post("/documents/<path:filename>/notes/<int:note_index>")
+@login_required
+def update_note(filename, note_index):
+    text = request.get_json(silent=True) or {}
+    try:
+        note_text = text["text"].strip()
+        if not note_text or len(note_text) > 500:
+            raise ValueError("Notes must be between 1 and 500 characters.")
+        _store().update_note(filename, note_index, note_text)
+        database().update_notebook(session["user_id"])
+    except (KeyError, OSError, UnicodeError, ValueError, FileNotFoundError) as error:
+        return jsonify(error=str(error)), 400
+    return jsonify(success=True)
+
+
+@notes.delete("/documents/<path:filename>/notes/<int:note_index>")
+@login_required
+def delete_note(filename, note_index):
+    try:
+        _store().delete_note(filename, note_index)
+        database().update_notebook(session["user_id"])
+    except (OSError, UnicodeError, ValueError, FileNotFoundError) as error:
+        return jsonify(error=str(error)), 400
+    return jsonify(success=True)

@@ -63,8 +63,9 @@ Signup validates usernames as 3-32 characters containing only letters, numbers,
 periods, underscores, or hyphens. Passwords must be 12-128 characters and the
 confirmation must match. Every account receives an isolated `notebook.md`
 file, and the database records its relative path, creation date, role, and
-last notebook update timestamp. Authenticated document and narration routes
-use the current user's notebook directory; the admin page shows account roles
+last notebook update timestamp. Authenticated document routes use the current
+user's notebook directory; note narration uses the browser Web Speech API. The
+admin page shows account roles
 and timestamps without revealing usernames.
 
 The application satisfies the database record requirement using the `users`
@@ -75,6 +76,12 @@ delete user records from the admin page; deleting an account also removes its
 private notebook directory. The application prevents
 an administrator from deleting their own account or the last administrator,
 so the administration area cannot be accidentally made inaccessible.
+
+Users can also create additional supported documents inside their own notebook
+directory. Each timestamped note is listed separately and can be edited or
+deleted without affecting other users or documents. The application validates
+document names, restricts files to supported text extensions, and protects
+these operations with authentication and CSRF tokens.
 
 OWASP security protections
 -------------------------
