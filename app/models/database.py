@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import shutil
 import sqlite3
-from contextlib import closing
+from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -38,9 +38,14 @@ class UserDatabase:
         connection.row_factory = sqlite3.Row
         return connection
 
+    @contextmanager
+    def transaction(self):
+        with closing(self.connect()) as connection, connection:
+            yield connection
+
     def initialize(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with closing(self.connect()) as connection, connection:
+        with self.transaction() as connection:
             connection.execute(SCHEMA)
 
     def username_hash(self, username):
@@ -48,17 +53,14 @@ class UserDatabase:
         return hmac.new(self.username_key, normalized, hashlib.sha256).hexdigest()
 
     def create_user(self, username, password, role="user"):
-        username_hash = self.username_hash(username)
         try:
-            with closing(self.connect()) as connection, connection:
+            with self.transaction() as connection:
                 cursor = connection.execute(
-                    """
-                    INSERT INTO users
-                        (username_hash, password_hash, role, created_at, notebook_path)
-                    VALUES (?, ?, ?, ?, ?)
-                    """,
+                    "INSERT INTO users "
+                    "(username_hash, password_hash, role, created_at, notebook_path) "
+                    "VALUES (?, ?, ?, ?, ?)",
                     (
-                        username_hash,
+                        self.username_hash(username),
                         generate_password_hash(password),
                         role,
                         _timestamp(),
@@ -89,7 +91,7 @@ class UserDatabase:
         return None
 
     def update_notebook(self, user_id):
-        with closing(self.connect()) as connection, connection:
+        with self.transaction() as connection:
             connection.execute(
                 "UPDATE users SET last_notebook_update = ? WHERE id = ?",
                 (_timestamp(), user_id),
@@ -108,7 +110,7 @@ class UserDatabase:
     def update_role(self, user_id, role):
         if role not in {"user", "admin"}:
             raise ValueError("Choose a valid account role.")
-        with closing(self.connect()) as connection, connection:
+        with self.transaction() as connection:
             result = connection.execute(
                 "UPDATE users SET role = ? WHERE id = ?",
                 (role, user_id),
@@ -119,7 +121,7 @@ class UserDatabase:
     def delete_user(self, user_id, document_root):
         document_root = Path(document_root).resolve()
         notebook_root = (document_root / "notebooks").resolve()
-        with closing(self.connect()) as connection, connection:
+        with self.transaction() as connection:
             user = connection.execute(
                 "SELECT notebook_path FROM users WHERE id = ?", (user_id,)
             ).fetchone()

@@ -23,6 +23,23 @@ dependency checks, and pytest with an 80% coverage requirement. It also caches
 Python dependencies, cancels redundant runs, and packages successful builds as
 an uploaded ZIP artifact.
 
+Database.Py
+-----------------------------------
+Imports: Loads hashing, SQLite, file handling, timestamps, and password-security tools.
+SCHEMA: Defines the users table and allowed roles.
+_timestamp(): Returns the current UTC time.
+UserDatabase.__init__: Stores the database path and secret key.
+connect(): Opens SQLite and returns rows by column name.
+transaction(): Handles database cleanup and commits automatically.
+initialize(): Creates the database folder and table.
+username_hash(): Safely hashes usernames for lookup.
+create_user(): Adds a user with a hashed password and notebook path.
+find_by_username() / authenticate(): Finds users and checks passwords.
+update_notebook(): Records the latest notebook change.
+list_users(): Retrieves account information for admins.
+update_role(): Changes a user’s role after validation.
+delete_user(): Removes the account and its notebook folder safely.
+
 Authentication and private notebooks
 -----------------------------------
 The application now initializes a SQLite database (`users.sqlite3`) and
