@@ -1,0 +1,2 @@
+- [2026-11-08 01:27 UTC] Today I attended this lesson we learned about testing frameworks.
+- [2026-11-08 01:28 UTC] Second lesson we covered further
