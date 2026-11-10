@@ -10,6 +10,6 @@ def test_login_page():
         response = request.get("/login")
 
         assert response.status == 200
-        assert "Login" in response.text()
+        assert "Sign in" in response.text()
 
         request.dispose()
