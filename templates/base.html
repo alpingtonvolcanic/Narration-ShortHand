@@ -13,6 +13,7 @@
       {% if g.user %}
         <nav class="account-nav">
           <a href="{{ url_for('notes.index') }}">Notebook</a>
+          <a href="{{ url_for('notes.information') }}">Information</a>
           {% if g.user["role"] == "admin" %}
             <a href="{{ url_for('auth.admin') }}">Admin</a>
           {% endif %}

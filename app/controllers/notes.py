@@ -135,3 +135,8 @@ def delete_note(filename, note_index):
     except (OSError, UnicodeError, ValueError, FileNotFoundError) as error:
         return jsonify(error=str(error)), 400
     return jsonify(success=True)
+
+@notes.route("/information")
+@login_required
+def information():
+    return render_template("notes/information.html")
