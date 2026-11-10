@@ -1,8 +1,10 @@
-from app.models.database import UserDatabase
 from flask import g
-from app.controllers.notes import _store
-from app.models.documents import DocumentStore
+
 from app import app
+from app.controllers.notes import _store
+from app.models.database import UserDatabase
+from app.models.documents import DocumentStore
+
 
 def test_create_user_and_authenticate(tmp_path):
     # Arrange
@@ -25,6 +27,7 @@ def test_create_user_and_authenticate(tmp_path):
     assert user["id"] == user_id
     assert user["role"] == "user"
     assert database.authenticate(username, "wrong-password") is None
+
 
 def test_home_page():
     client = app.test_client()
