@@ -17,7 +17,7 @@ class Config:
         os.environ.get("DATABASE_PATH", DOCUMENT_ROOT / "users.sqlite3")
     ).resolve()
     ADMIN_USERNAME = "admin"
-    ADMIN_PASSWORD = "admin123"
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
     DEMO_USERNAMES = ("demo1", "demo2")
     DEMO_PASSWORD = os.environ.get("DEMO_PASSWORD")
     DEFAULT_DOCUMENT = "narratornotes1.doc"

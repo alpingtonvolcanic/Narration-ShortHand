@@ -36,7 +36,8 @@ application.
 - Testing: pytest
 
 The application does not use Flask-Login or Heroku Postgres. The administrator
-account is provisioned with the hardcoded credentials `admin` / `admin123`.
+account is provisioned with the default credentials `admin` / `admin123`.
+Set `ADMIN_PASSWORD` to override the default outside source control.
 
 ## Routing
 
