@@ -19,6 +19,7 @@ def make_client(tmp_path, admin_password=None):
             "SECRET_KEY": "test-key",
             "DOCUMENT_ROOT": tmp_path,
             "DATABASE_PATH": tmp_path / "users.sqlite3",
+            "ADMIN_USERNAME": "administrator" if admin_password else "admin",
             "ADMIN_PASSWORD": admin_password,
         }
     )
@@ -200,6 +201,28 @@ def test_admin_can_view_account_summary(tmp_path):
 
     assert response.status_code == 200
     assert b"Account overview" in response.data
+
+
+def test_hardcoded_admin_account_can_log_in(tmp_path):
+    app = create_app(
+        {
+            "TESTING": True,
+            "SECRET_KEY": "test-key",
+            "DOCUMENT_ROOT": tmp_path,
+            "DATABASE_PATH": tmp_path / "users.sqlite3",
+        }
+    )
+    client = app.test_client()
+
+    response = post(
+        client,
+        "/login",
+        data={"username": "admin", "password": "admin123"},
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/")
+    assert client.get("/admin").status_code == 200
 
 
 def test_admin_can_update_and_delete_user_accounts(tmp_path):

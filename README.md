@@ -35,9 +35,8 @@ application.
 - Development environment: Visual Studio Code and GitHub Codespaces
 - Testing: pytest
 
-The application does not use Flask-Login or Heroku Postgres. Administrator
-credentials are configured through the `ADMIN_USERNAME` and `ADMIN_PASSWORD`
-environment variables rather than hardcoded in the source code.
+The application does not use Flask-Login or Heroku Postgres. The administrator
+account is provisioned with the hardcoded credentials `admin` / `admin123`.
 
 ## Routing
 
@@ -83,23 +82,19 @@ that forwarded port in the Ports panel.
 DOCUMENT_ROOT=/path/to/docs python app.py
 ```
 
-Set a strong `SECRET_KEY` in production. To provision the administrator account,
-set these environment variables before starting the application:
+Set a strong `SECRET_KEY` in production. The administrator account is
+provisioned automatically when the application starts:
 
 ```bash
 export SECRET_KEY='replace-with-a-long-random-value'
-export ADMIN_USERNAME=administrator
-export ADMIN_PASSWORD='set-this-outside-source-control'
 export DEMO_PASSWORD='set-a-different-password-at-least-12-characters'
 python app.py
 ```
 
-These values must be set in the same terminal before starting the application.
-They are not default passwords and are not stored in source control. With the
-example usernames above, sign in at `/login` using:
+Sign in at `/login` using:
 
 ```text
-Administrator: administrator / the value of ADMIN_PASSWORD
+Administrator: admin / admin123
 Dummy account: demo1 or demo2 / the value of DEMO_PASSWORD
 ```
 
@@ -114,13 +109,12 @@ python app.py
 
 Then log in at `/login` as `demo1` or `demo2` with `DemoPassword123!`.
 
-`ADMIN_PASSWORD` and `DEMO_PASSWORD` must each be 12-128 characters. The
-administrator is created only when `ADMIN_PASSWORD` is set; the optional dummy
-accounts are created only when `DEMO_PASSWORD` is set. If an account already
-exists in `users.sqlite3`, changing an environment variable does not change
-that account's password. Delete the local database only when resetting local
-assignment data is acceptable, or use the application's account-management
-process instead. Usernames must be 3-32 characters containing only letters,
+`DEMO_PASSWORD` must be 12-128 characters. The optional dummy accounts are
+created only when `DEMO_PASSWORD` is set. If an account already exists in
+`users.sqlite3`, changing configuration does not change that account's
+password. Delete the local database only when resetting local assignment data
+is acceptable, or use the application's account-management process instead.
+Usernames must be 3-32 characters containing only letters,
 numbers, `.`, `_`, or `-`. Press Enter in the note field to submit; use
 Shift+Enter for a line break.
 

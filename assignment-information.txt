@@ -46,25 +46,21 @@ The application now initializes a SQLite database (`users.sqlite3`) and
 provides `/signup`, `/login`, `/logout`, and `/admin` pages. Usernames are
 normalized and stored as keyed HMAC-SHA256 hashes; passwords are stored using
 Werkzeug's salted password hashing. The administrator account is provisioned
-from `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables, so its
-password is not committed to source control. Optional dummy accounts `demo1`
-and `demo2` can be provisioned with `DEMO_PASSWORD`.
+with the hardcoded credentials `admin` / `admin123`. The administrator
+account is no longer configured through environment variables. Optional dummy
+accounts `demo1` and `demo2` can be provisioned with `DEMO_PASSWORD`.
 
-Before starting the application, set the credentials in the terminal:
+Before starting the application, optionally set the demo password in the terminal:
 
-    export ADMIN_USERNAME=administrator
-    export ADMIN_PASSWORD='choose-a-password-at-least-12-characters'
     export DEMO_PASSWORD='choose-a-different-password-at-least-12-characters'
     python app.py
 
-The administrator logs in with username `administrator` and the value assigned
-to `ADMIN_PASSWORD`. The dummy users log in with username `demo1` or `demo2`
-and the value assigned to `DEMO_PASSWORD`. These are environment values, not
-default passwords, and must be set before each new application process. The
-administrator is not provisioned unless `ADMIN_PASSWORD` is set, and the dummy
-users are not provisioned unless `DEMO_PASSWORD` is set. Passwords must be
-12-128 characters. If an account already exists in `users.sqlite3`, changing
-the environment variable does not change its existing password.
+The administrator logs in with username `admin` and password `admin123`. The
+dummy users log in with username `demo1` or `demo2`
+and the value assigned to `DEMO_PASSWORD`. The dummy users are not provisioned
+unless `DEMO_PASSWORD` is set. `DEMO_PASSWORD` must be 12-128 characters. If
+an account already exists in `users.sqlite3`, changing the environment variable
+does not change its existing password.
 
 The demo users are created automatically; do not create them through the
 signup form. For example, set `DEMO_PASSWORD` and start the application:
@@ -194,3 +190,65 @@ data, and administrator account management. The CI workflow runs pytest with
 coverage and fails the build if coverage is below 80 percent. Evidence is the
 test file, the `python -m pytest` result, and the successful `test` job in
 GitHub Actions.
+
+Use Authentication*
+------------------
+g is Flask’s request-specific storage object. In this application, g.user stores the currently logged-in user loaded from the database. It is used to check whether a user is authenticated and whether they have administrator privileges.
+Broken Access Control
+Demo
+
+As a normal user:
+
+Log in as a standard user.
+Try to navigate directly to an admin URL such as:
+Plain Text
+/admin/users
+
+or whatever admin route exists in your app.
+
+Show the "Access Denied" response or redirect.
+Then show the code
+
+Briefly open:
+
+Python
+@login_required
+def ...
+ 
+if g.user["role"] != "admin":
+
+Explain:
+
+"Authenticated routes require login through Flask-Login, and administrator functions verify the user's role before permitting access. This prevents unauthorised users from accessing privileged functionality."
+
+Explain Blueprint
+--------------------
+Flask Blueprints to organise related routes into separate controller modules. The auth blueprint in app/controllers/auth.py handles user registration, login, logout, and administrator functions. The notes blueprint in app/controllers/notes.py handles notebook, document, and note operations.
+
+Both blueprints are registered with the Flask application in app/__init__.py. This keeps the application modular and makes the routing code easier to maintain. Routes can also be referenced by blueprint name, such as url_for("notes.index").
+
+Explain Application Factory Pattern
+---------------------
+The application uses Flask's application factory pattern. This creates the application instance, loads configuration from a dedicated Config class, and allows test-specific settings to be injected during automated pytest execution
+def create_app(test_config=None):
+
+Instead of creating the Flask app globally:
+
+Python
+app = Flask(__name__)
+ 
+
+flask instance is inside a function.
+
+This allows:
+
+Multiple app instances
+Easier testing
+Different configurations for development, testing, and production
+
+
+Auto Create Requirements. txt
+-----------------------
+
+pip3 freeze > requirements.txt
+pip3 install -r -requirements.txt

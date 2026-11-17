@@ -1,0 +1,2 @@
+- [2026-11-17 14:40 UTC] Patrick said this is important
+- [2026-11-17 14:40 UTC] Steven said we shoudl target these devices
