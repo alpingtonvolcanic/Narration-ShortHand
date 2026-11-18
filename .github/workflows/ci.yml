@@ -82,11 +82,13 @@ jobs:
           fi
 
           mkdir -p zap-results
+          chmod 0777 zap-results
           docker run --rm --network host \
             -v "$PWD/zap-results:/zap/wrk/:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
             -t http://127.0.0.1:5000 \
+            -I \
             -r zap-report.html
 
           python -m pytest \
